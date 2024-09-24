@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật người dùng</title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/add_User.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* .container_body{
+            margin-top: 80px;
+        } */
+    </style>
+</head>
+<body onload="loadUserData()">
+    <div class="fix">
+        <header class="header">
+            <div class="title">
+                <p>LOGO</p>
+            </div>
+        </header>
+
+    <div class="container_body">
+        <div class="col_left">
+            <ul class="sidebar">
+                <li class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_Revenue.html"><- Quản lý chi tiếu</a></li>
+            </ul>
+        </div>
+
+        <div class="col_right">
+            <div class="first_row">
+                <div class="title_r">
+                    <h1>Cập nhập thông tin chi tiêu</h1>
+                </div>
+            </div>
+          
+              <div class="second_row">
+                  <div class="auth_form">
+                      <div class="form-control">
+                          <label for="id">ID</label>
+                          <input type="text" id="id" placeholder="Nhập ID" disabled />
+                      </div>
+                      <div class="form-control">
+                        <label for="">Ngày tạo</label>
+                        <input type="date" id="dateCreate" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Người tạo</label>
+                        <input type="text" id="voter" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Giá trị</label>
+                        <input type="text" id="value" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Người duyệt</label>
+                        <input type="text" id="approver" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Tiền ra/ tiền vào</label>
+                        <input type="text" id="money_Source" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Cơ sở </label>
+                        <input type="text" id="branch" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Địa chỉ</label>
+                        <input type="text" id="address" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Mã thuế</label>
+                        <input type="text" id="taxCode" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Trạng thái</label>
+                        <input type="text" id="status" placeholder="" name=""/>
+                    </div>
+              
+                      <p id="btn_error" style="color:red"></p>
+                      <button onclick="updateSpending()">Cập nhật người dùng</button>
+                  </div>
+        
+              </div>
+
+        </div>
+    </div>
+    
+    </div>
+
+    <script>
+        // get ID user from URL
+        function getUserIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            console.log('id >>',params.get('id'));
+            return params.get('id');  // let's say URL format .../update_User.html?id=123
+        }
+
+
+       
+
+        // function download data user on page load 
+        async function loadUserData() {
+            const spendingId = getUserIdFromUrl();
+            const token = localStorage.getItem('token');
+            if (!spendingId) {
+                document.getElementById("btn_error").textContent = "ID người dùng không xác định.";
+                return;
+            }
+            let user =[] 
+            try {
+                const response = await axios.get(`http://localhost:3000/spending/getSpendingById/${spendingId}`
+                , {
+                 headers: {'Authorization': `Bearer ${token}`},
+                withCredentials: true  
+                });
+                console.log(`Bearer ${token}`);
+                console.log('response >>', response);
+                spendings = response.data.results;
+                console.log('spendings >>', spendings);
+                document.getElementById("id").value = spendings.id;
+                let date = new Date(spendings.dateCreate);
+                date.setDate(date.getDate() + 1);
+        
+        // Reformat the date string  yyyy-mm-dd
+        let formattedDate = date.toISOString().split('T')[0];
+                // document.getElementById("dateCreate").value = new Date(spendings.dateCreate).toISOString().split('T')[0];
+                document.getElementById("dateCreate").value = formattedDate;
+                document.getElementById("voter").value = spendings.voter; 
+                document.getElementById("value").value = spendings.value;
+                document.getElementById("approver").value = spendings.approver;
+                document.getElementById("money_Source").value = spendings.money_Source;
+                document.getElementById("branch").value = spendings.branch;
+                document.getElementById("address").value = spendings.address;
+                document.getElementById("taxCode").value = spendings.taxCode;
+                document.getElementById("status").value = spendings.status;
+
+            } catch (e) {
+
+
+                console.log(e);
+                //Error checking  HTTP 401 or 403
+                if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+                    
+                    window.location.href = "/manage_RevenueAndExpenditure/htmls/signIn.html";
+                
+                    console.log('sai lỗi 401 và 403')
+                } else {
+                    console.error('Có lỗi xảy ra:', error);
+                }
+            }
+        }
+
+        // Function update information of spending 
+        async function updateSpending() {
+            const spendingId = getUserIdFromUrl();
+            const dateCreate = document.getElementById("dateCreate").value.trim();
+            const voter = document.getElementById("voter").value.trim();
+            const value = document.getElementById("value").value.trim();
+            const approver = document.getElementById("approver").value.trim();
+            const money_Source = document.getElementById("money_Source").value.trim();
+            const branch = document.getElementById("branch").value.trim();
+            const address = document.getElementById("address").value.trim();
+            const taxCode = document.getElementById("taxCode").value.trim();
+            const status = document.getElementById("status").value.trim();
+
+            if (!dateCreate || !voter || !value || !approver || !money_Source || !branch || !address || !taxCode || !status) {
+                document.getElementById("btn_error").textContent = "Vui lòng điền đầy đủ thông tin.";
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token'); 
+            console.log('token nhận từ SignIn là :', token);
+                const response = await axios.put(`http://localhost:3000/spending/updateSpending/${spendingId}`, {
+                    dateCreate,
+                    voter,
+                    value,
+                    approver,
+                    money_Source,
+                    branch,
+                    address,
+                    taxCode,
+                    status},
+                    {
+                        headers: {'Authorization': `Bearer ${token}`},
+                    withCredentials: true
+                });
+                console.log(`Bearer ${token}`);
+                // handle reponse from api 
+                if (response.status === 200) {
+                    alert("Cập nhật chi tiêu thành công!");
+                    console.log("Server response:", response.data);
+                }
+            } catch (e) {
+                if (e.response) {
+                    console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                                            
+                        } else if (e.response.status === 403) {
+                             alert("bạn không có quyền này")
+                             window.location.href = "/manage_RevenueAndExpenditure/htmls/mg_Revenue.html";
+                            console.log('Forbidden - Không có quyền truy cập');                   
+                        }
+                    } else {
+                        console.log('Error:', e.message);
+                 }
+            }
+        }
+    </script>
+</body>
+</html>

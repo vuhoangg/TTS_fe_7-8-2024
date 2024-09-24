@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật người dùng</title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/add_User.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* .container_body{
+            margin-top: 80px;
+        } */
+    </style>
+</head>
+<body onload="loadUserData()">
+    <div class="fix">
+        <header class="header">
+            <div class="title">
+                <p>LOGO</p>
+            </div>
+        </header>
+   
+    <!-- Fomat-side  -->
+    <div class="container_body">
+
+        <div class="col_left">
+            <ul class="sidebar">
+                <li class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_User.html"><- Quản lý User</a></li>
+            </ul>
+        </div>
+
+        <div class="col_right">
+        
+            <div class="first_row">
+                <div class="title_r">
+                    <h1>Cập nhập thông tin người dùng </h1>
+                </div>
+            </div>
+          
+              <div class="second_row">
+               
+                  <div class="auth_form">
+                      <div class="form-control">
+                          <label for="idtk">ID</label>
+                          <input type="text" id="idtk" placeholder="Nhập ID" disabled />
+                      </div>
+                      <div class="form-control">
+                          <label for="username">Name</label>
+                          <input type="text" id="username" placeholder="Nhập tên"/>
+                      </div>
+                      <div class="form-control">
+                          <label for="email">Email</label>
+                          <input type="email" id="email" placeholder="Nhập email"/>
+                      </div>
+                      <div class="form-control">
+                          <label for="phone">Phone</label>
+                          <input type="tel" id="phone" placeholder="Nhập số điện thoại"/>
+                      </div>
+                      <div class="form-control">
+                          <label for="roles">Roles</label>
+                          <input type="text" id="roles" placeholder="Nhập quyền"/>
+                      </div>
+                      <div class="form-control">
+                          <label for="password">Password</label>
+                          <input type="text" id="password" placeholder="Nhập mật khẩu"/>
+                      </div>
+                      <div class="form-control">
+                          <label for="repassword">rePassword</label>
+                          <input type="text" id="repassword" placeholder="Nhập lại mật khẩu"/>
+                      </div>
+              
+                      <p id="btn_error" style="color:red"></p>
+                      <button onclick="updateUser()">Cập nhật người dùng</button>
+                  </div>
+        
+              </div>
+
+        </div>
+    </div>
+    
+    </div>
+
+    <script>
+    const token = localStorage.getItem('token');
+
+ 
+        function getUserIdFromUrl() {
+            renderAcountName();
+            const params = new URLSearchParams(window.location.search);
+            console.log('id >>',params.get('id'));
+            return params.get('id');  // Giả sử URL có dạng .../update_User.html?id=123
+        }
+
+        async function renderAcountName(){
+                try {
+                const token = localStorage.getItem('token'); 
+                console.log('token nhận từ SignIn là :', token);
+                console.log('text');
+                let response = await axios.get(`http://localhost:3000/getMe`
+                , {
+                headers: {
+                    'Authorization': `Bearer ${token}`  // Attach token to header
+                },
+                withCredentials: true  
+                });
+                
+                console.log('response >>', response);
+                user = response.data.results;
+                // get information of me 
+                console.log('user roles', user.Permission)
+
+                if(user.Permission !='admin')
+                {
+                    window.location.href = "/manage_RevenueAndExpenditure/htmls/mg_Revenue.html";
+                }
+            } catch (e) {
+                console.log(e);
+                //Error check HTTP 401 or 403
+                if (e.response) {
+                    console.log('Error response:', e.response.data); // See error details from the server 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                    } else if (e.response.status === 403) {
+                    alert("bạn không có quyền này")
+                    console.log('Forbidden - Không có quyền truy cập');   
+                    }
+                    } else {
+                    console.log('Error:', e.message);
+                }
+            }
+        }
+        // Function page load 
+        async function loadUserData() {
+            //renderAcountName();
+            const userId = getUserIdFromUrl();
+            const token = localStorage.getItem('token');
+            if (!userId) {
+                document.getElementById("btn_error").textContent = "ID người dùng không xác định.";
+                return;
+            }
+            let user =[] 
+            try {
+                const response = await axios.get(`http://localhost:3000/getUserById/${userId}`
+                , {
+                 headers: {'Authorization': `Bearer ${token}`},
+                withCredentials: true  
+                });
+                console.log(`Bearer ${token}`);
+                
+                console.log('response >>', response);
+                user = response.data.results;
+                console.log('user >>', user);
+                console.log('id user', user.id );
+
+                document.getElementById("idtk").value = user.id;
+                document.getElementById("username").value = user.Name;
+                document.getElementById("email").value = user.Email;
+                document.getElementById("phone").value = user.Phone;
+                document.getElementById("roles").value = user.Permission;
+                document.getElementById("password").value = user.PassWord;
+                document.getElementById("repassword").value = user.rePassWord;
+                
+
+            } catch (e) {
+                console.log(e);
+                //Error check HTTP 401 or 403
+                if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+                    //window.location.href = "/manage_RevenueAndExpenditure/htmls/signIn.html";
+                    console.log('sai lỗi 401 và 403')
+                } else {
+                    console.error('Có lỗi xảy ra:', error);
+                }
+            }
+        }
+        // Function update information of user
+        async function updateUser() {
+            const userId = getUserIdFromUrl();
+            const name = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const permission = document.getElementById("roles").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const repassword = document.getElementById("repassword").value.trim();
+          
+            if (!name || !email || !phone || !permission || !password || !repassword) {
+                document.getElementById("btn_error").textContent = "Vui lòng điền đầy đủ thông tin.";
+                return;
+            }
+
+            try {
+                
+                const response = await axios.put(`http://localhost:3000/updateUser/${userId}`, {
+                    name,
+                    email,
+                    phone,
+                    permission,
+                    password,
+                    repassword
+                }, {
+                 headers: {'Authorization': `Bearer ${token}`},
+                withCredentials: true 
+                });
+            
+
+                // handle reponse from api 
+                if (response.status === 200) {
+                    alert("Cập nhật người dùng thành công!");
+                }
+            } catch (e) {
+                if (e.response) {
+                    console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                                            
+                        } else if (e.response.status === 403) {
+                             alert("bạn không có quyền này")
+                            console.log('Forbidden - Không có quyền truy cập');                   
+                        }
+                    } else {
+                        console.log('Error:', e.message);
+                 }
+            }
+        }
+    </script>
+</body>
+</html>

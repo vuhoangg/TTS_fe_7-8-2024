@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function(){
+          $("p").click(function(){
+            $(this).hide();
+          });
+         
+          $(".click_me").click(function(){
+            $(".text1").css('color', 'red');
+          });
+
+          $(".click_me2").on({
+                click: function(){
+                    $(".text1").css('color', 'green');
+                },
+                mouseenter: function(){
+                    $(".text1").css('color', 'blue');
+                }
+          });
+        });
+        </script>
+</head>
+<body>
+    <p class="text1">If you click on me, I will disappear.</p>
+<p>Click me away!</p>
+<p>Click me too!</p>
+
+    <button class="click_me"> đổi màu đỏ
+    </button>
+    <button class="click_me2"> đổi màu xanh
+    </button>
+</body>
+</html>

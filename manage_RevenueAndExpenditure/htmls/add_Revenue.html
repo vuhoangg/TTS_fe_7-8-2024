@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Quản lý Admin </title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/mg_Revenue.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* .container_body{
+            margin-top: 80px;
+        } */
+        .myStyle{
+            background-color: coral;
+            display :disabled;
+        }
+    </style>
+</head>
+<body onload="Dataload()">
+    <div class="fix">
+        <header class="header">
+            <div class="title">
+                <p>LOGO</p>
+            </div>  
+        </header>
+
+   
+    <!-- Fomat-side  -->
+    <div class="container_body">
+
+        <div class="col_left">
+            <ul class="sidebar">
+                <li class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_Revenue.html"><- Trang chủ</a></li>
+                <!-- <li class="list-item"><a href="#">Quản lý User</a></li> -->
+            </ul>
+        </div>
+
+        <div class="col_right">
+        
+            <div class="first_row">
+                <div class="title_r">
+                    <h1>Thêm mới chi tiêu</h1>
+                </div>
+
+              <!-- <div class="btn_add-u">
+                <button class="btn_add-User">+ Tạo mới</button>
+              </div> -->
+            </div>
+          
+              <div class="second_row">
+               
+
+               <div>
+                <!-- <div class="auth__header">
+                    <h2>Quản lý Tài khoản</h2>
+                </div> -->
+                <div class="auth_form">
+                    <!-- <div class="form-control">
+                        <label for="idtk">ID </label>
+                        <input type="text" id="id" placeholder="" name="idtk"/>
+                    </div> -->
+
+                
+                    <div class="form-control">
+                        <label for="">Ngày tạo</label>
+                        <input type="date" id="dateCreate" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">người tạo</label>
+                        <input type="text" id="voter" placeholder="" name="" disabled/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Giá trị</label>
+                        <input type="text" id="value" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Người duyệt</label>
+                        <input type="text" id="approver" placeholder="" name="" disabled/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Tiền ra/ tiền vào</label>
+                        <input type="text" id="money_Source" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Cơ sở </label>
+                        <input type="text" id="branch" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Địa chỉ</label>
+                        <input type="text" id="address" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Mã thuế</label>
+                        <input type="text" id="taxCode" placeholder="" name=""/>
+                    </div>
+                    <div class="form-control">
+                        <label for="">Trạng thái</label>
+                        <input type="text" id="status" placeholder="" name=""/>
+                        <!-- <select  id="status" onchange="performSort()">
+                            <option value="Sắp xếp">Sắp xếp</option>
+                            <option value="Duyệt">Duyệt</option>
+                            <option value="Chờ Duyệt">Chờ Duyệt</option>
+                            <option value="Từ Chối">Từ Chối</option>
+                     </select> -->
+                    </div>
+
+                    <p runat="server" id="btn_error" style="color:red"></p>
+                </div>
+                <div class="list_btn">
+                    <button onclick="addSpending()" id="add_btn">Thêm </button>
+                </div>
+
+            
+            </div>
+
+              </div>
+        </div>
+    </div>
+    <!-- ------ -->
+    <footer class="container_footer"> </footer>
+    <script>
+
+         const token = localStorage.getItem('token'); 
+        //Function page load 
+         async function Dataload() {
+        try {
+                const token = localStorage.getItem('token'); 
+                console.log('token nhận từ SignIn là :', token);
+                let response = await axios.get(`http://localhost:3000/getMe`
+                , {
+                headers: {
+                    'Authorization': `Bearer ${token}`  // Attach token to header
+                },
+                withCredentials: true
+                });
+                console.log('response >>', response);
+                user = response.data.results;
+                console.log('user >>', user);
+                console.log('id user', user.id );
+                //document.getElementById("idtk").value = user.id;
+                console.log('quyền ', user.Permission); 
+                document.getElementById("voter").value = user.Name || 'Tên không xác định';
+
+                if(user.Permission =='admin'){
+                    document.getElementById("status").value;
+                    document.getElementById("approver").value = user.Name || 'Tên không xác định';
+                }else{
+                   
+                    document.getElementById("status").value = 'Chờ duyệt';
+                    document.getElementById("status").disabled = true; 
+                    document.getElementById("approver").value = 'NULL';
+                   
+                }
+                //document.getElementById("email").value = user.Email;
+                //document.getElementById("phone").value = user.Phone;
+                //document.getElementById("roles").value = user.Permission;
+                //document.getElementById("password").value = user.PassWord;
+                //document.getElementById("repassword").value = user.rePassWord;
+
+            } catch (e) {
+                console.log(e);
+                //Error check HTTP 401 hoặc 403
+                if (e.response) {
+                    console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                    } else if (e.response.status === 403) {
+                    alert("bạn không có quyền này")
+                    console.log('Forbidden - Không có quyền truy cập');
+                    }
+                    } else {
+                    console.log('Error:', e.message);
+                }
+            }
+     }
+
+        // Function create speding 
+        async function addSpending() {
+            const token = localStorage.getItem('token'); 
+            console.log('lấy token : >>',token );
+            // Get data from input fields 
+            // const id = document.getElementById("idtk").value.trim();
+            const dateCreate = document.getElementById("dateCreate").value.trim();
+            const voter = document.getElementById("voter").value.trim();
+            const value = document.getElementById("value").value.trim();
+            const approver = document.getElementById("approver").value.trim();
+            const money_Source = document.getElementById("money_Source").value.trim();
+            const branch = document.getElementById("branch").value.trim();
+            const address = document.getElementById("address").value.trim();
+            const taxCode = document.getElementById("taxCode").value.trim();
+            const status = document.getElementById("status").value.trim();
+
+            if ( !dateCreate || !voter || !value || !approver || !money_Source || !branch || !address || !taxCode || !status) {
+                document.getElementById("btn_error").textContent = "Vui lòng điền đầy đủ thông tin.";
+                return;
+            }
+
+            try {
+                
+                // Sent request POST to API
+                const response = await axios.post("http://localhost:3000/spending/createSpendingShow", {
+                    // id,
+                    dateCreate,
+                    voter,
+                    value,
+                    approver,
+                    money_Source,
+                    branch,
+                    address,
+                    taxCode,
+                    status}
+                    , {
+                    headers: {
+                        'Authorization': `Bearer ${token}`  // Attach token to header
+                    },
+                    withCredentials: true  
+                    });
+                    console.log(`Bearer ${token}`);
+                    console.log('response >> ', response);
+                // Xử lý phản hồi từ API
+                if (response.status === 200) {
+                    alert("Thêm người dùng thành công!");
+                    console.log("Server response:", response.data);
+                    // document.getElementById("dateCreate").value = "";
+                    // document.getElementById("voter").value = "";
+                    // document.getElementById("value").value = "";
+                    // document.getElementById("approver").value = "";
+                    // document.getElementById("money_Source").value = "";
+                    // document.getElementById("branch").value = "";
+                    // document.getElementById("address").value = "";
+                    // document.getElementById("taxCode").value = "";
+                    // document.getElementById("status").value = "";
+                }
+            } catch (e)
+            {
+                if (e.response) {
+                    console.log('Error response:', e.response.data); 
+                        if (e.response.status === 401) {
+                            console.log('Unauthorized - Token có thể đã hết hạn');
+                        } else if (e.response.status === 403) {
+                            alert("bạn không có quyền này")
+                            console.log('Forbidden - Không có quyền truy cập');
+                            // handle when user don't roles access
+                        }
+                } else {
+                    console.log('Error:', e.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

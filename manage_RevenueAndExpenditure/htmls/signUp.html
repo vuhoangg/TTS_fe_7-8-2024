@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký</title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/signUp.css">
+</head>
+<body>
+    <div class="fix">
+    <header class="header">
+        <div class="title">
+            <p>LOGO</p>
+        </div>
+    </header>
+
+    
+    </div>
+
+    <!-- Sign Up -->
+        <div class="content">
+            
+            <div id="reg-form" class="auth">
+            <form action="" method="post" runat="server">
+    
+                <div class="auth__header">
+                    <h2>Đăng ký</h2>
+                </div>
+    
+                <div class="auth__form">
+    
+                    <div class="form-control">
+                        <label for="username">TÀI KHOẢN<i style=" color:red">*</i></label>
+                        <input type="text" id="username" placeholder="Nhập tên đăng nhập" name="username"/>
+                        <p runat="server" id="username_error"></p>
+                    </div>
+    
+                    <div class="form-control">
+                        <label for="email">EMAIL<i style=" color:red">*</i></label>
+                        <input type="text" id="email" placeholder="abcd@gmail.com" name="email"/>
+                        <p></p>
+                    </div>
+
+                    <div class="form-control">
+                        <label for="phone">SĐT<i style=" color:red">*</i></label>
+                        <input type="text" id="phone" placeholder="1900xxxx" name="phone"/>
+                        <p></p>
+                    </div>
+    
+                    <div class="form-control">
+                        <label for="password">MẬT KHẨU<i style=" color:red">*</i></label>
+                        <input type="password" id="password" placeholder="Nhập mật khẩu" name="password"/>
+                        <p></p>
+                    </div>
+    
+                    <div class="form-control">
+                        <label for="re-password">Xác nhận mật khẩu<i style=" color:red">*</i></label>
+                        <input type="password" id="re-password" placeholder="Nhập lại mật khẩu" name="re-password"/>
+                        <p></p>
+                    </div>
+    
+                    <p runat="server" id="btn_error" style="color:red"></p>
+                    <button class="auth_btn" id="btnReg">Đăng ký ngay </button>
+
+                    <div class="btn_login">
+                        <a  class="login" href="/manage_RevenueAndExpenditure/htmls/signIn.html">Đăng nhập</a>
+                    </div>
+                </div>
+            </form>
+            </div>
+        
+    </div>
+    <!-- ------ -->
+    <!-- <footer class="container_footer"></footer> -->
+</body>
+</html>

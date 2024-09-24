@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý người dùng</title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/mg_User.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        .pagination button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+    
+        .pagination button.active {
+            background-color: #56d5d2; 
+            color: white;
+        }
+    
+        .pagination button:disabled {
+            background-color: #e7e7e7;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        #acount_name{
+            font-family: 'Times New Roman', Times, serif;
+            /* background-color: azure; */
+            color: #ffffff;
+            margin-top: 8px ;
+        }
+    </style>
+    
+</head>
+<body onload="getUser()">
+    <div class="fix">
+        <header class="header">
+            <div class="title">
+                <p>LOGO</p>
+            </div>
+            <div class="search">
+                <div class="box">
+                    <input type="text" class="search-text" id="searchInput" placeholder="Tìm kiếm"/>
+                    <button class="btn" onclick="performSearch()">
+                        <img class="img-icon" src="/manage_RevenueAndExpenditure/icons/icon_seach.png"/>
+                    </button>
+                </div>
+            </div> 
+    
+            <div class="block_bell">
+                <button class="btn_bell">
+                    <a href=""><img class="img-gh" src="/manage_RevenueAndExpenditure/icons/icon_bell.png"/></a>
+                </button>
+            </div>
+            
+            <div class="taikhoan" Onclick="clearLocalStorage()">
+                <button class="account">
+                    <a href="/manage_RevenueAndExpenditure/htmls/signIn.html"><img class="img-acc" src="/manage_RevenueAndExpenditure/icons/icon_account.png"/></a>
+                </button>
+                <div>
+                    <h6 id="acount_name"></h6>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar and other content -->
+        <div class="container_body">
+            <div class="col_left">
+                <ul class="sidebar">
+                    <li class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_Revenue.html">Trang chủ</a></li>
+                    <li class="list-item"><a href="#">Quản lý User</a></li>
+                </ul>
+            </div>
+
+            <div class="col_right">
+                <div class="first_row">
+                    <div class="title_r">
+                        <h1>Quản lý người dùng</h1>
+                    </div>
+
+                    <div class="btn_add-u">
+                        <button class="btn_add-User"><a href="/manage_RevenueAndExpenditure/htmls/add_User.html">+Tạo mới</a></button>
+                    </div>
+                </div>
+              
+                <div class="second_row">
+                    <table id="table" border='1'></table>
+                </div>
+
+                <!-- Pagination buttons -->
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+
+        <footer class="container_footer"></footer>
+
+    <script>
+        let users = [];
+        let currentPage = 1; 
+        let keyword = ''; 
+
+        
+        async function renderAcountName(){
+                try {
+                const token = localStorage.getItem('token'); 
+                console.log('token nhận từ SignIn là :', token);
+                // get spending data from API with parameter 'page' 
+                let response = await axios.get(`http://localhost:3000/getMe`
+                , {
+                headers: {
+                    'Authorization': `Bearer ${token}`  // Attach token to header
+                },
+                withCredentials: true  
+            });
+                
+                console.log('response >>', response);
+                user = response.data.results;
+                console.log('user >>', user);
+                console.log('id user', user.id );
+                //document.getElementById("idtk").value = user.id;
+                console.log('name ', user.Name);
+                document.getElementById("acount_name").value = user.Name;
+                 document.getElementById("acount_name").textContent = user.Name || 'Tên không xác định'
+                console.log('name', document.getElementById("acount_name").value = user.Name);
+
+                //document.getElementById("email").value = user.Email;
+                //document.getElementById("phone").value = user.Phone;
+                //document.getElementById("roles").value = user.Permission;
+                //document.getElementById("password").value = user.PassWord;
+                //document.getElementById("repassword").value = user.rePassWord;
+
+            } catch (e) {
+                console.log(e);
+                //Error checking HTTP 401 or 403
+                if (e.response) {
+                    console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn'); 
+                    } else if (e.response.status === 403) {
+                    alert("bạn không có quyền này")
+                    console.log('Forbidden - Không có quyền truy cập');
+                    }
+                    } else {
+                    console.log('Error:', e.message);
+                }
+            }
+        }
+
+
+
+        // Funciton get me 
+        async function getUser(keyword = '', page = 1) {
+            
+            const token = localStorage.getItem('token')
+            try {
+                renderAcountName()
+                
+                let data = await axios.get(`http://localhost:3000/showUser?keyword=${encodeURIComponent(keyword)}&page=${page}`
+                , {headers: {
+                            'Authorization': `Bearer ${token}`  // Attach token to header
+                            },
+                withCredentials: true  
+                });
+                console.log(`Bearer ${token}`);
+
+                console.log(data);
+                users = data.data.results;
+                console.log(users);
+                renderUser();
+                renderPagination(keyword, page); 
+            } catch (e) {
+                if (e.response) {
+                 console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                                            
+                     } else if (e.response.status === 403) {
+                        alert("bạn không có quyền này")
+                        window.location.href = "/manage_RevenueAndExpenditure/htmls/mg_Revenue.html"
+                             console.log('Forbidden - Không có quyền truy cập');
+                        }
+                    } else {
+                        console.log('Error:', e.message);
+                    }
+            }
+        }
+
+        async function deleteUser(userId) {
+            const isConfirmed = confirm("Bạn có chắc chắn muốn xóa người dùng này không?");
+            const token = localStorage.getItem('token');
+            if (isConfirmed) { 
+                try {
+                    const response = await axios.delete(`http://localhost:3000/deleteUser/${userId}`
+                    ,
+                    {headers:
+                         {
+                            'Authorization': `Bearer ${token}`
+                            },
+                        withCredentials: true 
+                    });
+                    console.log(`Bearer ${token}`);
+                    console.log(response.data); 
+                    getUser(keyword, currentPage); 
+                } catch (e) {
+                    if (e.response) {
+                            console.log('Error response:', e.response.data); 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                       
+                     } else if (e.response.status === 403) {
+                        alert("bạn không có quyền này")
+                        //window.location.href = "/manage_RevenueAndExpenditure/htmls/mg_Revenue.html"
+                             console.log('Forbidden - Không có quyền truy cập');
+                        }
+                    } else {
+                        console.log('Error:', e.message);
+                    }
+                }
+            } else {
+               
+            }
+        }
+
+        // Function searchs user
+        function performSearch(page = 1) {
+            keyword = document.getElementById('searchInput').value.trim(); 
+            currentPage = page; 
+            window.history.pushState({}, '', `?keyword=${encodeURIComponent(keyword)}&page=${currentPage}`); 
+            getUser(keyword, currentPage);
+        }
+        // Function render user data 
+        function renderUser() {
+            let element = `<tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Permission</th>
+                <th>PassWord</th>
+                <th>RePassWord</th>
+                <th>Tác Vụ</th>
+            </tr>`;
+
+            if (users.length === 0) {
+                element += `<tr><td colspan="6">Không có người dùng nào được tìm thấy.</td></tr>`;
+            } else {
+                users.forEach(value => {
+                    element += `<tr>
+                        <td>${value.id}</td>
+                        <td>${value.Name}</td>
+                        <td>${value.Email}</td>
+                        <td>${value.Phone}</td>
+                        <td>${value.Permission}</td>
+                        <td>${value.PassWord}</td>
+                        <td>${value.rePassWord}</td>
+                        <td>
+                            <button onclick="deleteUser(${value.id})">Xoá</button>
+                            <a href="/manage_RevenueAndExpenditure/htmls/update_User.html?id=${value.id}"><button>Sửa</button></a>
+                        </td>
+                    </tr>`;
+                });
+            }
+
+            document.getElementById('table').innerHTML = element;
+        }
+
+        // Function display pagination button 
+        function renderPagination(keyword, currentPage) {
+            let paginationElement = `<button onclick=
+            "navigatePage('${encodeURIComponent(keyword)}', ${currentPage - 1})" 
+            ${currentPage === 1 ? 'disabled' : ''}>
+            Trang trước</button>`;
+
+            for (let i = 1; i <= 10; i++) {
+                paginationElement += `<button onclick="navigatePage('${encodeURIComponent(keyword)}', ${i})"
+                 ${currentPage === i ? 'class="active"' : ''}>
+                 ${i}</button>`;
+            }
+            paginationElement += `<button onclick="navigatePage('${encodeURIComponent(keyword)}', ${currentPage + 1})"
+             ${currentPage === 10 ? 'disabled' : ''}>
+            Trang sau</button>`;
+            document.getElementById('pagination').innerHTML = paginationElement;
+        }
+
+        // Funtion convert pagingaiton when click button Pagination
+        function navigatePage(keyword, page) {
+            currentPage = page;
+            window.history.pushState({}, '', `?keyword=${encodeURIComponent(keyword)}&page=${page}`);
+            getUser(keyword, page);
+        }
+
+        function clearLocalStorage() {
+        localStorage.removeItem('token'); 
+        console.log("LocalStorage đã được xóa.");
+    }
+    </script>
+</body>
+</html>

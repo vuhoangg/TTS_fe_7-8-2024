@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Quản lý chi tiêu </title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/mg_Revenue.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        .pagination button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+    
+        .pagination button.active {
+            background-color: #56d5d2; /* Màu xanh */
+            color: white;
+        }
+    
+        .pagination button:disabled {
+            background-color: #e7e7e7;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .hidden{
+            display: none ;
+        }
+        #acount_name{
+            font-family: 'Times New Roman', Times, serif;
+            /* background-color: azure; */
+            color: #ffffff;
+            margin-top: 8px ;
+        }
+    </style>
+
+</head>
+<body onload="getSpending()">
+    <div class="fix">
+    <header class="header">
+        <div class="title">
+            <p>LOGO</p>
+        </div>
+        <div class="search" >
+            <div class="box">
+                <input type="text" class="search-text" id="searchInput" placeholder="Tìm kiếm"/>
+                <button class="btn" onClick="performSearch()" >
+                    <img class="img-icon" src="/manage_RevenueAndExpenditure/icons/icon_seach.png"/>
+                </button>
+            </div>
+        </div> 
+
+        <div class="block_bell">
+        <button class="btn_bell" >
+            <a href="" ><img class="img-gh" src="/manage_RevenueAndExpenditure/icons/icon_bell.png"/></a>
+        </button>
+        </div>
+
+        
+        <div class="taikhoan">
+        <button class="account"  onClick="clearLocalStorage()">
+            <a href="/manage_RevenueAndExpenditure/htmls/signIn.html"><img class="img-acc" src="/manage_RevenueAndExpenditure/icons/icon_account.png"/></a>
+        </button>
+        <div>
+            <h6 id="acount_name"></h6>
+        </div>
+        </div>
+    </header>
+
+   
+    <!-- Fomat-side  -->
+    <div class="container_body">
+
+        <div class="col_left">
+            <ul class="sidebar">
+                <li class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_Revenue.html">Quản lý chi tiêu </a></li>
+                <li   id="mg_User_btn" class="list-item"><a href="/manage_RevenueAndExpenditure/htmls/mg_User.html">Quản lý User</a></li>
+            </ul>
+        </div>
+
+        <div class="col_right">
+        
+            <div class="first_row">
+                <div class="title_r">
+                    <h1>Quản lý chi tiêu</h1>
+                </div>
+
+              <div class="btn_add-u">
+                <button class="btn_add-User"><a href="/manage_RevenueAndExpenditure/htmls/add_Revenue.html">+Tạo mới</a></button>
+              </div>
+            </div>
+          
+              <div class="second_row">
+                <div style="margin-bottom: 30px;">
+
+                    Ngày tạo <input type="date" id="filter_date" name="create_date">
+                   <!-- <button type="text" id="create_person" name="create_person">  -->
+                    Người tạo 
+                    <input type="text"  id="filter_voter">
+                    
+            
+                    Trạng Thái
+                    <select  id="list_status">
+                        
+                        <option value="">----   ----</option>
+                        <option value="Chấp Thuận">Chấp thuận</option>
+                        <option value="Chờ duyệt">Chờ duyệt</option>
+                        <option value="Từ chối">Từ chối</option>
+                 </select>
+               
+                   <button type="text" id="filter" onClick="performFilter()" name="filter">Lọc
+                    
+                   </button>
+
+
+                   <button style="float:right; margin-right:0px " type="text" id="sort" name="sort">
+                       <select  id="list_sort" onchange="performSort()">
+                            <option value="">Sắp xếp</option>
+                            <option value="dateCreate ASC">Ngày cũ -> mới</option>
+                            <option value="dateCreate DESC">Ngày mới -> cũ </option>
+                            <option value="value ASC">Giá trị Thấp -> Cao</option>
+                            <option value="value DESC">Giá trị Cao -> Thấp</option>
+                     </select>
+                   </button>
+
+                </div>
+             
+               <table id="table" border='1'></table>
+
+               <!-- Pagination buttons -->
+               <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ------ -->
+
+    <footer class="container_footer"></footer>
+
+    <script>
+        let spendings = [];
+        let currentPage = 1;
+        let currentPage1 = 1;
+        let keyword ='';
+        let dateCreate ='';
+        let voter ='';
+        let status ='';
+        let sortOrder='';
+
+
+        async function renderAcountName(){
+                try {
+                const token = localStorage.getItem('token'); 
+                console.log('token nhận từ SignIn là :', token);
+                let response = await axios.get(`http://localhost:3000/getMe`
+                , {
+                headers: {
+                    'Authorization': `Bearer ${token}`  // Attach token to header
+                },
+                withCredentials: true  
+                });
+                
+                console.log('response >>', response);
+                user = response.data.results;
+                // get information of me 
+                document.getElementById("acount_name").value = user.Name;
+                document.getElementById("acount_name").textContent = user.Name || 'Tên không xác định'
+                console.log('name', document.getElementById("acount_name").value = user.Name);
+                console.log('user roles', user.Permission)
+                if(user.Permission =='user')
+                {
+                    // Hide classes the users don't have access to 
+                    const list = document.getElementById("Task1").classList;
+                    list.add("hidden");
+                    const list1 = document.getElementById("Task2").classList;
+                     list1.add("hidden");
+                     const list3 = document.getElementById("mg_User_btn").classList;
+                     list3.add("hidden");
+
+                      // Hide task 1 and task 2 
+                    const task1Cells = document.querySelectorAll(".Task_item1");
+                    task1Cells.forEach(cell => {
+                        cell.classList.add("hidden");
+                    });
+                    const task2Cells = document.querySelectorAll(".Task_item2");
+                    task2Cells.forEach(cell => {
+                        cell.classList.add("hidden");
+                    });
+                }
+                if(user.Permission =='accountant')
+                {
+                    // Hide task 2
+                    const list = document.getElementById("Task2").classList;
+                     list.add("hidden");
+                   const task1Cells = document.querySelectorAll(".Task_item2");
+                   task1Cells.forEach(cell => {
+                       cell.classList.add("hidden");
+                   });
+                   // Hide router to mg_User 
+                     const list3 = document.getElementById("mg_User_btn").classList;
+                     list3.add("hidden");
+                }
+
+                //document.getElementById("email").value = user.Email;
+                //document.getElementById("phone").value = user.Phone;
+                //document.getElementById("roles").value = user.Permission;
+                //document.getElementById("password").value = user.PassWord;
+                //document.getElementById("repassword").value = user.rePassWord;
+
+            } catch (e) {
+                console.log(e);
+                //Error check HTTP 401 or 403
+                if (e.response) {
+                    console.log('Error response:', e.response.data); // See error details from the server 
+                    if (e.response.status === 401) {
+                        console.log('Unauthorized - Token có thể đã hết hạn');
+                    } else if (e.response.status === 403) {
+                    alert("bạn không có quyền này")
+                    console.log('Forbidden - Không có quyền truy cập');   
+                    }
+                    } else {
+                    console.log('Error:', e.message);
+                }
+            }
+        }
+
+        async function getSpending(keyword ='',page = 1) {
+        try {
+            const token = localStorage.getItem('token'); 
+            console.log('token nhận từ SignIn là :', token);
+            // get speding date to API with parameter 'keyword', 'page' 
+            //renderAcountName()
+            let data = await axios.get(`http://localhost:3000/spending/showSpending?keyword=${encodeURIComponent(keyword)}&page=${page}`
+            , {
+            headers: {
+                'Authorization': `Bearer ${token}`  // Attach token to header
+            },
+            withCredentials: true 
+        });
+            console.log('data >>' ,data);
+            spendings = data.data.results;
+            console.log(spendings);
+            renderSpending();
+            //renderAcountName()
+            renderPagination(keyword, page ); 
+        } catch (e) {
+            console.log(e);
+            //Error checking HTTP 401 hoặc 403
+            if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+                window.location.href = "/manage_RevenueAndExpenditure/htmls/signIn.html";
+                console.log('sai lỗi 401 và 403')
+            } else {
+                console.error('Có lỗi xảy ra:', error);
+            }
+        }
+    }
+        // get information of spending filter by date and voter and status 
+        async function getSpendingFilter(dateCreate ,voter ,status ,page ) {
+            const token = localStorage.getItem('token')
+        try {
+            console.log("tham số của filter date ", dateCreate  );
+            console.log("tham số của filter voter ", voter  );
+            console.log("tham số của filter status ", status  );
+            console.log("tham số của filter page ", page  );
+            // Get user data from the API with parameter 'dateCreate','voter','status','page' 
+            let response = await axios.get(`http://localhost:3000/spending/showSpending?dateCreate=${dateCreate}&voter=${voter}&status=${status}&page=${page}`
+            , {
+            headers: {
+                'Authorization': `Bearer ${token}`  // Attach token to header
+            },
+            withCredentials: true  
+            });
+            console.log(`Bearer ${token}`);
+            console.log('response 1 >>' ,response);
+            spendings = response.data.results;
+            console.log('render ',spendings);
+            renderSpending();
+            renderPaginationFilter(dateCreate ,voter ,status ,page )
+        } catch (e) {
+            console.log(e);
+            if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+                window.location.href = "/manage_RevenueAndExpenditure/htmls/signIn.html";
+                console.log('sai lỗi 401 và 403')
+            } else {
+                console.error('Có lỗi xảy ra:', error);
+            }
+        }
+    }
+                async function getSpendingSort(sortOrder ,page ) {
+                    const token = localStorage.getItem('token')
+                try {
+                    console.log("tham số của filter status ", sortOrder  );
+                    console.log("tham số của filter page ", page  );
+                    // get spengding from api with partameter 'sortOrder' , 'page' 
+                    let response = await axios.get(`http://localhost:3000/spending/showSpending?sortOrder=${sortOrder}&page=${page}`
+                    , {
+                    headers: {
+                        'Authorization': `Bearer ${token}`  // Attach token to header
+                    },
+                    withCredentials: true  
+                    });
+                    console.log(`Bearer ${token}`);
+                    console.log('response 1 >>' ,response);
+                    spendings = response.data.results;
+                    console.log(spendings);
+                    //renderSpending();
+                    renderPaginationSort(sortOrder ,page )
+                } catch (e) {
+                    console.log(e);
+                    if (e.response) {
+                        console.log('Error response:', e.response.data); // See error detail to server 
+                        if (e.response.status === 401) {
+                            console.log('Unauthorized - Token có thể đã hết hạn');
+                        } else if (e.response.status === 403) {
+                            alert("bạn không có quyền xoá")
+                            console.log('Forbidden - Không có quyền truy cập');
+                        }
+                    } else {
+                            console.log('Error:', e.message);
+                    }
+                }
+            }
+                // fuction delete spending 
+                async function deleteSpending(userId) {
+                        const isConfirmed = confirm("Bạn có chắc chắn muốn xóa chi tiêu này không?");
+                        const token = localStorage.getItem('token'); 
+                        if (isConfirmed) { // if click OK
+                            try {
+                                // call api delete spending with parameter "Spendingid"
+                                const response = await axios.delete(`http://localhost:3000/spending/deleteSpending/${userId}`
+                                , {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`  // Attach token to header
+                                },
+                                withCredentials: true  
+                                });
+                                console.log(`Bearer ${token}`);
+                                getSpending(keyword, currentPage); 
+                                console.log('xoá thành công ');
+                            } catch (e) {
+                            
+                                    if (e.response) {
+                                        console.log('Error response:', e.response.data); // See error detail form server 
+                                        if (e.response.status === 401) {
+                                            console.log('Unauthorized - Token có thể đã hết hạn');
+                                        } else if (e.response.status === 403) {
+                                            alert("bạn không có quyền xoá")
+                                            console.log('Forbidden - Không có quyền truy cập');
+                                        }
+                                    } else {
+                                        console.log('Error:', e.message);
+                                    }
+                                } 
+                            }
+                        
+                    }
+
+
+        // Function return results search by parameter 'keyword'
+        function performSearch(page = 1) {
+            keyword = document.getElementById('searchInput').value.trim(); 
+            currentPage = page; // when new searches, always start from page 1
+            window.history.pushState({}, '', `?keyword=${encodeURIComponent(keyword)}&page=${currentPage}`);
+             // update URL with parameter "keyword" and "currentPage"
+             console.log("keyword ở performSearch >>" ,keyword)
+            getSpending(keyword, currentPage);
+        }
+
+       // Function return results fillter by parameter 'Createdate', 'voter', 'status'
+        function performFilter(page = 1 ) {
+            const dateCreate = document.getElementById('filter_date').value.trim();
+            console.log('Ngày cần lọc ',dateCreate);
+            const voter = document.getElementById('filter_voter').value.trim();
+            console.log('Người tạo cần lọc ',voter);
+            const selectElement = document.getElementById('list_status');
+            const status = selectElement.value;
+            console.log('Giá trị đã chọn:', status);
+            currentPage1 = page;
+            console.log('Giá trị trang:', currentPage1);
+            window.history.pushState({}, '', `?dateCreate=${dateCreate}&voter=${voter}&status=${status}&page=${currentPage1}`);
+            getSpendingFilter(dateCreate ,voter, status, currentPage1);
+        }
+       // Function return results sort by parameter sortOrder 
+        function performSort(page = 1 ) {
+            
+            const selectElement = document.getElementById('list_sort');
+            const sortOrder = selectElement.value;
+            console.log('Giá trị đã chọn:', sortOrder);
+            currentPage1 = page; 
+            console.log('Giá trị trang:', currentPage1);
+            window.history.pushState({}, '', `?sortOrder=${sortOrder}&page=${currentPage1}`);
+            getSpendingSort(sortOrder , currentPage1);
+        }
+    // Function reder data display 
+    function renderSpending() {
+            let element = `<tr>
+                <th>ID</th>
+                <th>Ngày Tạo</th>
+                <th>Người Tạo</th>
+                <th>Giá Trị</th>
+                <th>Người Duyệt</th>
+                <th>Tiền vào/ra </th>
+                <th>Cơ sở</th>
+                <th>Địa chỉ</th>
+                <th>Mã Thuế</th>
+                <th>Trang thái</th>
+                <th id="Task1">Tác Vụ 1</th>
+                <th id="Task2">Tác Vụ 2</th>
+            </tr>`;
+            spendings.map(value => {
+         // Convert date string to date object 
+        let date = new Date(value.dateCreate);
+        // plus by 1 day to compensate for the difference 
+        date.setDate(date.getDate() + 1);
+        
+        // Reformat the date string yyyy-mm-dd
+        let formattedDate = date.toISOString().split('T')[0];
+                element += `<tr>
+                    <td>${value.id}</td>
+                    <td>${formattedDate}</td>
+                    <td>${value.voter}</td>
+                    <td>${value.value}</td>
+                    <td>${value.approver}</td>
+                    <td>${value.money_Source}</td>
+                    <td>${value.branch}</td>
+                    <td>${value.address}</td>
+                    <td>${value.taxCode}</td>
+                    <td>${value.status}</td>
+                    <td class="Task_item1">
+                        <button onclick="deleteSpending(${value.id})">Xoá</button>
+                        <a href="/manage_RevenueAndExpenditure/htmls/update_Revenue.html?id=${value.id}"><button>Sửa</button></a>
+                        </td>
+                        <td class="Task_item2">
+                                <button onclick="updateStatus(${value.id}, 'Duyệt')" >Duyệt</button>
+                                <button onclick="updateStatus(${value.id}, 'Từ chối')">Từ chối</button>
+                        </td>
+                        </tr>`;
+                        });
+                        document.getElementById('table').innerHTML = element;
+                        renderAcountName()
+        }
+
+        // Function display pagination button
+        function renderPagination(keyword, currentPage) {
+            // console.log("keyword ở pagination >>" ,keyword)
+            let paginationElement = `<button onclick="navigatePage('${encodeURIComponent(keyword)}', ${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trang trước</button>`;
+
+            for (let i = 1; i <= 10; i++) {
+                paginationElement += `<button onclick="navigatePage('${encodeURIComponent(keyword)}', ${i})" ${currentPage === i ? 'class="active"' : ''}>${i}</button>`;
+            }
+
+            paginationElement += `<button onclick="navigatePage('${encodeURIComponent(keyword)}', ${currentPage + 1})" ${currentPage === 10 ? 'disabled' : ''}>Trang sau</button>`;
+
+            document.getElementById('pagination').innerHTML = paginationElement;
+        }
+        //  Function convert pagination button when click
+        function navigatePage(keyword, page) {
+            currentPage = page;
+            // Update URL with parameter  'page'
+            window.history.pushState({}, '',`?keyword=${encodeURIComponent(keyword)}&page=${page}`);
+            console.log("keywword >> là ", keyword );
+            getSpending(keyword, page); 
+        }
+
+
+        // function render pagination by fillter 
+        function renderPaginationFilter(dateCreate ,voter ,status , currentPage1) {
+            // console.log("keyword ở pagination >>" ,keyword)
+
+            let paginationElement = `<button onClick="navigatePageFilter('${dateCreate}', '${voter}','${status}', ${currentPage1 - 1})" ${currentPage1 === 1 ? 'disabled' : ''}>Trang trước</button>`;
+
+            for (let i = 1; i <= 10; i++) {
+                paginationElement += `<button onClick="navigatePageFilter('${dateCreate}', '${voter}','${status}', ${i})" ${currentPage1 === i ? 'class="active"' : ''}>${i}</button>`;
+            }
+            
+            paginationElement += `<button onClick="navigatePageFilter('${dateCreate}', '${voter}', '${status}', ${currentPage1 + 1})" ${currentPage1 === 10 ? 'disabled' : ''}>Trang sau</button>`;
+            
+            document.getElementById('pagination').innerHTML = paginationElement;
+        }
+        // Function convert pagination button when click by fillter 
+        function navigatePageFilter(dateCreate ,voter ,status, page) {
+            let currentPage1 = page;
+            // update URL with parameter 'page'
+            window.history.pushState({}, '',`?dateCreate=${dateCreate}&voter=${voter}&status=${status}&page=${page}`);
+            getSpendingFilter(dateCreate ,voter ,status ,page) ; 
+            
+        }
+
+        // Function render pagination by sort 
+        function renderPaginationSort( sortOrder, currentPage1) {
+            let paginationElement = `<button onClick="navigatePageSort('${sortOrder}', ${currentPage1 - 1})" ${currentPage1 === 1 ? 'disabled' : ''}>Trang trước</button>`;
+            for (let i = 1; i <= 10; i++) {
+                paginationElement += `<button onClick="navigatePageSort('${sortOrder}', ${i})" ${currentPage1 === i ? 'class="active"' : ''}>${i}</button>`;
+            }
+            paginationElement += `<button onClick="navigatePageSort( '${sortOrder}', ${currentPage1 + 1})" ${currentPage1 === 10 ? 'disabled' : ''}>Trang sau</button>`;
+            document.getElementById('pagination').innerHTML = paginationElement;
+        }
+        
+        function navigatePageSort(sortOrder, page) {
+            let currentPage1 = page;
+            window.history.pushState({}, '',`?sortOrder=${sortOrder}&page=${page}`);
+            getSpendingSort(sortOrder ,page) ; 
+        }
+        
+        // function delete localStorage 
+        function clearLocalStorage() {
+        localStorage.removeItem('token'); 
+        console.log("LocalStorage đã được xóa.");
+    }
+
+    // Function update speding status 
+    async function updateStatus(id, newStatus) {
+        const token = localStorage.getItem('token'); 
+        console.log("lấy token cho updateStatus", token);
+    try {
+        // Sent request  PATCH from API to upadte status 
+        const response = await axios.patch(`http://localhost:3000/spending/updateStatus/${id}`, 
+            {status: newStatus },
+            {
+             headers: {
+                'Authorization': `Bearer ${token}`  // Attach token to header
+            },
+             withCredentials: true 
+        
+        });
+        console.log(`Bearer ${token}`);
+        console.log('Cập nhật trạng thái thành công:', response.data);
+        getSpending(keyword, currentPage);
+        alert('sửa trạng thái thành công')
+    } catch (e) {
+        if (e.response) {
+                console.log('Error response:', e.response.data); // See error details to Server
+                if (e.response.status === 401) {
+                    console.log('Unauthorized - Token có thể đã hết hạn');
+                } else if (e.response.status === 403) {
+                    alert('bạn không có quyền này ');
+                    console.log('Forbidden - Không có quyền truy cập');
+                }
+            } else {
+                console.log('Error:', e.message);
+            }
+    }
+}
+    </script>
+</body>
+</html>

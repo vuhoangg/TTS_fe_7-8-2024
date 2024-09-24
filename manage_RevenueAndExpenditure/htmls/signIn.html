@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập</title>
+    <link rel="stylesheet" href="/manage_RevenueAndExpenditure/styles/signIn.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.4/axios.min.js" integrity="sha512-6VJrgykcg/InSIutW2biLwA1Wyq+7bZmMivHw19fI+ycW0jIjsadm8wKQQLlfv3YUS4owfMDlZU38NtaAK6fSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div class="fix">
+        <header class="header">
+            <div class="title">
+                <p>LOGO</p>
+            </div>
+        </header>
+    </div>
+    <!-- Sign -->
+    <div class="content">
+        <div class="auth">
+            <div class="auth__header"> <h2>Đăng nhập</h2> </div>
+            <div class="auth__form">
+                <div class="form-control">
+                    <label for="email">EMAIL<i style="color:red">*</i></label>
+                    <input type="text" id="email" placeholder="abcd@gmail.com" name="email"/>
+                    <p id="emailError" style="color:red"></p>
+                </div>
+                <div class="form-control">
+                    <label for="password">MẬT KHẨU<i style="color:red">*</i></label>
+                    <input type="password" id="password" placeholder="Nhập mật khẩu" name="password">
+                </div>
+                <p id="errorL" style="color:red"></p>
+                <button id="loginBtn" onClick="SignIn()" class="auth_btn">Đăng nhập</button>
+
+                <div class="btn_signUp">
+                    <a  class="sign_up" href="/manage_RevenueAndExpenditure/htmls/signUp.html">Đăng ký</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function SignIn() {
+            let email = document.getElementById('email').value.trim();
+            let password = document.getElementById('password').value.trim();
+            let emailError = document.getElementById('emailError');
+            let errorL = document.getElementById('errorL');
+            emailError.innerText = ''; 
+            errorL.innerText = ''; 
+
+            if (!email) {
+                emailError.innerText = 'Email không được để trống.';
+                return;
+            }
+
+            if (!password) {
+                errorL.innerText = 'Mật khẩu không được để trống.';
+                return;
+            }
+            try {
+                const response = await axios.post('http://localhost:3000/auth/login', {
+                    email,
+                    password
+                    }, 
+                    { withCredentials: true });
+                
+                console.log('token là : ', response)
+                
+
+                if (response.status === 200) {
+                    const token = response.data.token; 
+            
+                    // Save token in  localStorage or sessionStorage
+                    localStorage.setItem('token', token);
+                    window.location.href = "/manage_RevenueAndExpenditure/htmls/mg_Revenue.html";
+                } else {
+                    errorL.innerText = response.data.message || 'Có lỗi xảy ra.';
+                }
+            } catch (error) {
+                console.error('Có lỗi xảy ra:', error);
+                errorL.innerText = 'Có lỗi xảy ra. Vui lòng thử lại.';
+            }
+        }
+    </script>
+</body>
+</html>
